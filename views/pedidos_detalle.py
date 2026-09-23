@@ -8,6 +8,7 @@ from database.database import (
 )
 
 from views.pedidos_costos import abrir_costos_pedido
+from views.factura import imprimir_factura
 
 
 # =========================================================
@@ -327,6 +328,19 @@ def abrir_detalle(ventana_padre, pedido_id):
         text="Ver costos",
         width=15,
         command=lambda: abrir_costos_pedido(
+            ventana,
+            pedido_id
+        )
+    ).pack(
+        side="left",
+        padx=5
+    )
+
+    tk.Button(
+        marco_botones,
+        text="Imprimir factura",
+        width=15,
+        command=lambda: imprimir_factura(
             ventana,
             pedido_id
         )

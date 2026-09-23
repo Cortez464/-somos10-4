@@ -13,6 +13,7 @@ from database.database import (
 from views.pedidos_detalle import abrir_detalle
 from views.pedidos_costos import abrir_costos_pedido
 from views.pedidos_editar import abrir_editar_pedido
+from views.factura import imprimir_factura
 
 
 ESTADOS = [
@@ -604,6 +605,22 @@ def abrir_pedidos_listado(ventana_principal):
             )
 
     # =====================================================
+    # IMPRIMIR FACTURA
+    # =====================================================
+
+    def imprimir_factura_seleccionada():
+
+        pedido_id = obtener_seleccion()
+
+        if pedido_id is None:
+            return
+
+        imprimir_factura(
+            ventana,
+            pedido_id
+        )
+
+    # =====================================================
     # EDITAR PEDIDO
     # =====================================================
 
@@ -689,6 +706,16 @@ def abrir_pedidos_listado(ventana_principal):
         text="Costos del pedido",
         width=17,
         command=costos_pedido
+    ).pack(
+        side="left",
+        padx=4
+    )
+
+    tk.Button(
+        marco_botones,
+        text="Imprimir factura",
+        width=15,
+        command=imprimir_factura_seleccionada
     ).pack(
         side="left",
         padx=4
