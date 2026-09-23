@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Base de datos local (no debe subirse, cada quien tiene la suya)
+*.db
+somos10_4.db
+
+# Archivos de configuración del editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
