@@ -1,5 +1,7 @@
 import sqlite3
+import shutil
 from pathlib import Path
+from datetime import datetime
 
 
 # --------------------------------------------------
@@ -13,6 +15,30 @@ CARPETA_DATOS.mkdir(exist_ok=True)
 
 NOMBRE_BASE_DATOS = CARPETA_DATOS / "somos10_4.db"
 
+CARPETA_BACKUPS = CARPETA_PROYECTO / "backups"
+MAX_BACKUPS = 10
+
+
+def respaldar_base_datos():
+    """
+    Copia la base de datos actual a la carpeta 'backups' con
+    fecha y hora en el nombre. Conserva solo los MAX_BACKUPS
+    respaldos mas recientes para no llenar el disco.
+    """
+    if not NOMBRE_BASE_DATOS.exists():
+        return
+
+    CARPETA_BACKUPS.mkdir(exist_ok=True)
+
+    marca_tiempo = datetime.now().strftime("%Y%m%d_%H%M%S")
+    destino = CARPETA_BACKUPS / f"somos10_4_{marca_tiempo}.db"
+
+    shutil.copy2(NOMBRE_BASE_DATOS, destino)
+
+    respaldos = sorted(CARPETA_BACKUPS.glob("somos10_4_*.db"))
+    while len(respaldos) > MAX_BACKUPS:
+        respaldos[0].unlink()
+        respaldos.pop(0)
 
 # --------------------------------------------------
 # CONEXIÓN

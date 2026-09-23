@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 # Importaciones de la base de datos y vistas del sistema
-from database.database import crear_base_datos
+from database.database import crear_base_datos, respaldar_base_datos
 from views.dashboard import abrir_dashboard
 from views.clientes import abrir_clientes
 from views.pedidos import abrir_pedidos
@@ -28,6 +28,7 @@ def iniciar_aplicacion():
     # --------------------------------------------------
     try:
         crear_base_datos()
+        respaldar_base_datos()
     except Exception as error:
         messagebox.showerror(
             "Error al iniciar",
