@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import ui_utils as messagebox
+from datetime import date, datetime
 
 from database.database import (
     obtener_pedidos,
@@ -71,7 +72,16 @@ def abrir_pedidos_listado(ventana_principal):
     ).pack(
         side="left"
     )
+    resumen_var = tk.StringVar(value="")
 
+    tk.Label(
+        marco_superior,
+        textvariable=resumen_var,
+        font=("Arial", 11)
+    ).pack(
+        side="left",
+        padx=(20, 0)
+    )
     # =====================================================
     # TABLA
     # =====================================================
@@ -194,7 +204,9 @@ def abrir_pedidos_listado(ventana_principal):
         fill="both",
         expand=True
     )
-
+    tabla.tag_configure("atrasado", background="#FEE2E2")
+    tabla.tag_configure("proximo", background="#FEF3C7")
+    
     scrollbar.pack(
         side="right",
         fill="y"
@@ -245,14 +257,43 @@ def abrir_pedidos_listado(ventana_principal):
         try:
 
             pedidos = obtener_pedidos()
+            hoy = date.today()
+
+            suma_total = 0.0
+            pendientes_pago = 0
 
             for pedido in pedidos:
 
                 pago = (
-                    "Pagado"
+                    "✅ Pagado"
                     if pedido[6]
-                    else "Pendiente"
+                    else "⏳ Pendiente"
                 )
+
+                if not pedido[6]:
+                    pendientes_pago += 1
+
+                suma_total += float(pedido[5])
+
+                tag = ""
+                fecha_entrega_str = pedido[3]
+                estado = pedido[4]
+
+                if estado != "Entregado" and fecha_entrega_str:
+                    try:
+                        fecha_entrega = datetime.strptime(
+                            fecha_entrega_str, "%Y-%m-%d"
+                        ).date()
+
+                        dias = (fecha_entrega - hoy).days
+
+                        if dias < 0:
+                            tag = "atrasado"
+                        elif dias <= 1:
+                            tag = "proximo"
+
+                    except ValueError:
+                        pass
 
                 tabla.insert(
                     "",
@@ -265,8 +306,15 @@ def abrir_pedidos_listado(ventana_principal):
                         pedido[4],
                         f"${float(pedido[5]):.2f}",
                         pago
-                    )
+                    ),
+                    tags=(tag,) if tag else ()
                 )
+
+            resumen_var.set(
+                f"Mostrando {len(pedidos)} pedidos   •   "
+                f"${suma_total:.2f} en total   •   "
+                f"{pendientes_pago} pendientes de pago"
+            )
 
         except Exception as e:
 
@@ -457,7 +505,7 @@ def abrir_pedidos_listado(ventana_principal):
 
         pago_actual = valores[6]
 
-        if pago_actual == "Pagado":
+        if pago_actual == "✅ Pagado":
 
             messagebox.showinfo(
                 "Pago",
