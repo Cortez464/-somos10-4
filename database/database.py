@@ -982,16 +982,19 @@ def obtener_reporte_detallado(periodo="Todo"):
             filtro_pedidos = "WHERE strftime('%Y-%m', p.fecha_recepcion) = strftime('%Y-%m', 'now', 'localtime')"
             filtro_gastos = "WHERE strftime('%Y-%m', fecha) = strftime('%Y-%m', 'now', 'localtime')"
 
-        # Top 5 Prendas
+        # Top 5 Prendas (todas las prendas "Otro: descripción" se agrupan como "Otro")
         cursor.execute(f"""
             SELECT 
-                dp.prenda, 
+                CASE
+                    WHEN dp.prenda LIKE 'Otro: %' THEN 'Otro'
+                    ELSE dp.prenda
+                END AS prenda_grupo,
                 SUM(dp.cantidad) AS total_cant, 
                 SUM(dp.subtotal) AS total_monto
             FROM detalle_pedido dp
             INNER JOIN pedidos p ON dp.pedido_id = p.id
             {filtro_pedidos}
-            GROUP BY dp.prenda
+            GROUP BY prenda_grupo
             ORDER BY total_cant DESC
             LIMIT 5
         """)

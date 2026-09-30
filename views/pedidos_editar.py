@@ -65,8 +65,8 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
         prendas.append({
             "nombre": fila[0],
             "cantidad": fila[1],
-            "precio_unitario": fila[2],
-            "subtotal": fila[3]
+            "precio_unitario": float(fila[2]),
+            "subtotal": float(fila[3])
         })
 
     # ======================================================
@@ -365,13 +365,73 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
         pady=5
     )
 
+    # ======================================================
+    # CAMPOS PARA "OTRO" (descripción y precio manual)
+    # ======================================================
+
+    marco_otro = tk.Frame(marco_prendas)
+
+    marco_otro.grid(
+        row=1,
+        column=0,
+        columnspan=6,
+        pady=5
+    )
+
+    tk.Label(
+        marco_otro,
+        text="Descripción:"
+    ).grid(
+        row=0,
+        column=0,
+        padx=5
+    )
+
+    entrada_descripcion_otro = tk.Entry(marco_otro, width=30)
+
+    entrada_descripcion_otro.grid(
+        row=0,
+        column=1,
+        padx=5
+    )
+
+    tk.Label(
+        marco_otro,
+        text="Precio $:"
+    ).grid(
+        row=0,
+        column=2,
+        padx=5
+    )
+
+    entrada_precio_otro = tk.Entry(marco_otro, width=8)
+
+    entrada_precio_otro.grid(
+        row=0,
+        column=3,
+        padx=5
+    )
+
+    # Oculto hasta que se elija "Otro"
+    marco_otro.grid_remove()
+
     def actualizar_precio(*args):
 
         nombre = prenda_seleccionada.get()
 
-        precio = PRECIOS_PRENDAS.get(nombre, 0.50)
+        if nombre == "Otro":
 
-        precio_var.set(f"${precio:.2f}")
+            precio_var.set("Manual")
+
+            marco_otro.grid()
+
+        else:
+
+            marco_otro.grid_remove()
+
+            precio = PRECIOS_PRENDAS.get(nombre, 0.50)
+
+            precio_var.set(f"${precio:.2f}")
 
     prenda_seleccionada.trace_add("write", actualizar_precio)
 
@@ -450,6 +510,14 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
 
         calcular_total()
 
+    def limpiar_campos_prenda():
+
+        entrada_cantidad.delete(0, tk.END)
+        entrada_cantidad.insert(0, "1")
+
+        entrada_descripcion_otro.delete(0, tk.END)
+        entrada_precio_otro.delete(0, tk.END)
+
     def agregar_prenda():
 
         nombre = prenda_seleccionada.get()
@@ -470,12 +538,51 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
 
             return
 
-        precio_unitario = PRECIOS_PRENDAS.get(nombre, 0.50)
+        # Precio: manual para "Otro", fijo para las demás
+        if nombre == "Otro":
 
-        # Si ya existe la prenda, sumar cantidad
+            descripcion = entrada_descripcion_otro.get().strip()
+
+            if not descripcion:
+
+                messagebox.showwarning(
+                    "Descripción requerida",
+                    "Describe qué prenda es en la opción Otro."
+                )
+
+                return
+
+            try:
+
+                precio_unitario = float(
+                    entrada_precio_otro.get().strip().replace(",", ".")
+                )
+
+                if precio_unitario <= 0:
+                    raise ValueError
+
+            except ValueError:
+
+                messagebox.showwarning(
+                    "Precio incorrecto",
+                    "El precio debe ser un número mayor que cero."
+                )
+
+                return
+
+            nombre = f"Otro: {descripcion}"
+
+        else:
+
+            precio_unitario = PRECIOS_PRENDAS.get(nombre, 0.50)
+
+        # Si ya existe la prenda (mismo nombre y precio), sumar cantidad
         for prenda in prendas:
 
-            if prenda["nombre"] == nombre:
+            if (
+                prenda["nombre"] == nombre
+                and round(prenda["precio_unitario"], 2) == round(precio_unitario, 2)
+            ):
 
                 prenda["cantidad"] += cantidad
 
@@ -484,6 +591,8 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
                 )
 
                 actualizar_lista()
+
+                limpiar_campos_prenda()
 
                 return
 
@@ -498,8 +607,7 @@ def abrir_editar_pedido(ventana_padre, pedido_id, al_guardar=None):
 
         actualizar_lista()
 
-        entrada_cantidad.delete(0, tk.END)
-        entrada_cantidad.insert(0, "1")
+        limpiar_campos_prenda()
 
     def eliminar_prenda():
 

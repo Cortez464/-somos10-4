@@ -18,6 +18,8 @@ PRECIOS_PRENDAS = {
     "Camiseta": 0.50,
     "Short": 0.50,
     "Ropa interior": 0.50,
+    "Toalla": 0.75,
+    "Sábanas": 0.75,
     "Otro": 0.50
 }
 
@@ -382,6 +384,8 @@ def abrir_pedidos(ventana_principal):
         "Pantalón",
         "Short",
         "Ropa interior",
+        "Toalla",
+        "Sábanas",
         "Otro"
     ]
 
@@ -439,18 +443,86 @@ def abrir_pedidos(ventana_principal):
         pady=5
     )
 
+    # ======================================================
+    # CAMPOS PARA "OTRO" (descripción y precio manual)
+    # ======================================================
+
+    marco_otro = tk.Frame(
+        marco_prendas
+    )
+
+    marco_otro.grid(
+        row=1,
+        column=0,
+        columnspan=6,
+        pady=5
+    )
+
+    tk.Label(
+        marco_otro,
+        text="Descripción:"
+    ).grid(
+        row=0,
+        column=0,
+        padx=5
+    )
+
+    entrada_descripcion_otro = tk.Entry(
+        marco_otro,
+        width=30
+    )
+
+    entrada_descripcion_otro.grid(
+        row=0,
+        column=1,
+        padx=5
+    )
+
+    tk.Label(
+        marco_otro,
+        text="Precio $:"
+    ).grid(
+        row=0,
+        column=2,
+        padx=5
+    )
+
+    entrada_precio_otro = tk.Entry(
+        marco_otro,
+        width=8
+    )
+
+    entrada_precio_otro.grid(
+        row=0,
+        column=3,
+        padx=5
+    )
+
+    # Oculto hasta que se elija "Otro"
+    marco_otro.grid_remove()
+
     def actualizar_precio(*args):
 
         nombre = prenda_seleccionada.get()
 
-        precio = PRECIOS_PRENDAS.get(
-        nombre,
-        0.50
-    )
+        if nombre == "Otro":
 
-        precio_var.set(
-        f"${precio:.2f}"
-    )
+            precio_var.set("Manual")
+
+            marco_otro.grid()
+
+        else:
+
+            marco_otro.grid_remove()
+
+            precio = PRECIOS_PRENDAS.get(
+                nombre,
+                0.50
+            )
+
+            precio_var.set(
+                f"${precio:.2f}"
+            )
 
     prenda_seleccionada.trace_add(
         "write",
@@ -555,6 +627,28 @@ def abrir_pedidos(ventana_principal):
     # AGREGAR PRENDA
     # ======================================================
 
+    def limpiar_campos_prenda():
+
+        entrada_cantidad.delete(
+            0,
+            tk.END
+        )
+
+        entrada_cantidad.insert(
+            0,
+            "1"
+        )
+
+        entrada_descripcion_otro.delete(
+            0,
+            tk.END
+        )
+
+        entrada_precio_otro.delete(
+            0,
+            tk.END
+        )
+
     def agregar_prenda():
 
         nombre = prenda_seleccionada.get()
@@ -578,18 +672,69 @@ def abrir_pedidos(ventana_principal):
 
             return
 
-        precio_unitario = PRECIOS_PRENDAS.get(
-            nombre,
-            0.50
-        )
+        # --------------------------------------------------
+        # Precio: manual para "Otro", fijo para las demás
+        # --------------------------------------------------
+
+        if nombre == "Otro":
+
+            descripcion = (
+                entrada_descripcion_otro
+                .get()
+                .strip()
+            )
+
+            if not descripcion:
+
+                messagebox.showwarning(
+                    "Descripción requerida",
+                    "Describe qué prenda es en la opción Otro."
+                )
+
+                return
+
+            try:
+
+                precio_unitario = float(
+                    entrada_precio_otro
+                    .get()
+                    .strip()
+                    .replace(",", ".")
+                )
+
+                if precio_unitario <= 0:
+
+                    raise ValueError
+
+            except ValueError:
+
+                messagebox.showwarning(
+                    "Precio incorrecto",
+                    "El precio debe ser un número mayor que cero."
+                )
+
+                return
+
+            nombre = f"Otro: {descripcion}"
+
+        else:
+
+            precio_unitario = PRECIOS_PRENDAS.get(
+                nombre,
+                0.50
+            )
 
         # --------------------------------------------------
-        # Si ya existe la prenda, sumar cantidad
+        # Si ya existe la prenda (mismo nombre y precio),
+        # sumar cantidad
         # --------------------------------------------------
 
         for prenda in prendas:
 
-            if prenda["nombre"] == nombre:
+            if (
+                prenda["nombre"] == nombre
+                and prenda["precio_unitario"] == precio_unitario
+            ):
 
                 prenda["cantidad"] += cantidad
 
@@ -599,6 +744,8 @@ def abrir_pedidos(ventana_principal):
                 )
 
                 actualizar_lista()
+
+                limpiar_campos_prenda()
 
                 return
 
@@ -625,19 +772,7 @@ def abrir_pedidos(ventana_principal):
 
         actualizar_lista()
 
-        # --------------------------------------------------
-        # Reiniciar cantidad
-        # --------------------------------------------------
-
-        entrada_cantidad.delete(
-            0,
-            tk.END
-        )
-
-        entrada_cantidad.insert(
-            0,
-            "1"
-        )
+        limpiar_campos_prenda()
 
     # ======================================================
     # BOTÓN AGREGAR PRENDA

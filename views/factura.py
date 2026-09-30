@@ -3,6 +3,7 @@ import sys
 import subprocess
 import platform
 from datetime import datetime
+from xml.sax.saxutils import escape
 
 import ui_utils as messagebox
 
@@ -84,6 +85,15 @@ def generar_factura_pdf(pedido_id):
 
     estilo_normal = estilos["Normal"]
 
+    # Estilo para celdas de la tabla de prendas (permite saltos de línea
+    # cuando la descripción de una prenda "Otro" es larga)
+    estilo_celda = ParagraphStyle(
+        "CeldaPrenda",
+        parent=estilos["Normal"],
+        fontSize=10,
+        leading=12
+    )
+
     estilo_total = ParagraphStyle(
         "Total",
         parent=estilos["Normal"],
@@ -150,7 +160,7 @@ def generar_factura_pdf(pedido_id):
 
     for prenda in prendas:
         filas_prendas.append([
-            prenda[0],
+            Paragraph(escape(str(prenda[0])), estilo_celda),
             str(prenda[1]),
             f"${float(prenda[2]):.2f}",
             f"${float(prenda[3]):.2f}"
@@ -168,6 +178,7 @@ def generar_factura_pdf(pedido_id):
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
             ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F6F9")]),
             ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -195,7 +206,7 @@ def generar_factura_pdf(pedido_id):
     observaciones = pedido[8] if pedido[8] else "Sin observaciones"
 
     elementos.append(Paragraph("<b>Observaciones:</b>", estilo_normal))
-    elementos.append(Paragraph(observaciones, estilo_normal))
+    elementos.append(Paragraph(escape(observaciones), estilo_normal))
     elementos.append(Spacer(1, 30))
 
     elementos.append(
